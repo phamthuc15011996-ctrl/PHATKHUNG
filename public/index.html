@@ -1,0 +1,37 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PHATKHUNG - Bốc số</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#f2f5fb;font-family:Arial,sans-serif;color:#172033}.app{max-width:760px;margin:auto;padding:22px 14px}h1{text-align:center;margin:5px 0;color:#263a70}.sub{text-align:center;color:#667085;margin-bottom:20px}.card{background:white;border-radius:18px;padding:18px;box-shadow:0 8px 30px #25345b18}.join{display:flex;gap:8px;margin-bottom:18px}.join input{flex:1;min-width:0;padding:13px;border:1px solid #cfd6e4;border-radius:10px;font-size:16px}button{border:0;border-radius:10px;padding:12px 17px;font-weight:800;cursor:pointer}.join button{background:#263a70;color:white}.status{text-align:center;min-height:70px;display:grid;place-items:center;font-weight:900;font-size:44px;color:#e6a900}.status.small{font-size:20px;color:#667085}table{width:100%;border-collapse:collapse;margin-top:5px}th,td{border:1px solid #b9c1cf;padding:12px;text-align:left}th{background:#eef2f8;font-size:15px}th:last-child,td:last-child{width:145px;text-align:center}.number{font-size:27px;font-weight:900;color:#172e67;letter-spacing:5px}.rolling{color:#e6a900}.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}.start{background:#f4c542}.reset{background:#e8edf5}.clear{background:#ef6b6b;color:white}.note{text-align:center;color:#8a93a3;font-size:12px;margin-top:14px}@media(max-width:500px){th,td{padding:10px 8px}th:last-child,td:last-child{width:105px}.number{font-size:23px}.status{font-size:38px}}</style></head>
+<body><div class="app"><h1>🎰 PHATKHUNG</h1><div class="sub">BỐC SỐ ONLINE</div><div class="card">
+<div class="join"><input id="name" placeholder="Nhập tên người chơi"><button onclick="join()">THAM GIA</button></div>
+<div id="status" class="status small">CHỜ NGƯỜI CHƠI THAM GIA</div>
+<table><thead><tr><th>DANH SÁCH NGƯỜI CHƠI</th><th>SỐ</th></tr></thead><tbody id="rows"><tr><td colspan="2" style="text-align:center;color:#8a93a3">Chưa có người chơi</td></tr></tbody></table>
+<div class="controls"><button class="start" onclick="post('/start')">▶ BẮT ĐẦU</button><button class="reset" onclick="post('/reset')">↻ VÒNG MỚI</button><button class="clear" onclick="post('/clear')">XÓA DANH SÁCH</button></div>
+<div class="note">Khi bắt đầu, tất cả thiết bị cùng đếm 5 → 4 → 3 → 2 → 1 và xem chung toàn bộ kết quả.</div></div></div>
+<script>
+let data={players:[],state:{phase:"lobby",results:{}}},roll=null;
+const post=(u,d={})=>fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});
+function join(){
+ const nameInput=document.getElementById("name");
+ const n=(nameInput?.value || "").trim();
+ if(!n)return;
+ localStorage.setItem("pk",n);
+ post("/join",{name:n}).catch(console.error);
+ nameInput.value="";
+}
+document.getElementById("name").addEventListener("keydown",e=>{if(e.key==="Enter")join()});
+function draw(random=false){
+ const rows=document.getElementById("rows");
+ if(!data.players.length){rows.innerHTML='<tr><td colspan="2" style="text-align:center;color:#8a93a3">Chưa có người chơi</td></tr>';return}
+ rows.innerHTML=data.players.map(p=>{let v="";
+   if(random)v=String(Math.floor(Math.random()*1000)).padStart(3,"0");
+   else if(data.state.phase==="result")v=data.state.results[p]||"";
+   return `<tr><td>👤 ${p}</td><td class="number ${random?'rolling':''}">${v}</td></tr>`}).join("")
+}
+new EventSource("/events").onmessage=e=>{
+ data=JSON.parse(e.data);let s=data.state;clearInterval(roll);
+ const status=document.getElementById("status");
+ if(s.phase==="lobby"){status.className="status small";status.textContent="CHỜ CHỦ PHÒNG BẮT ĐẦU";draw()}
+ if(s.phase==="countdown"){status.className="status";status.textContent=s.count;draw()}
+ if(s.phase==="spin"){status.className="status";status.textContent="ĐANG QUAY...";draw(true);roll=setInterval(()=>draw(true),70)}
+ if(s.phase==="result"){status.className="status small";status.textContent="🎉 KẾT QUẢ";draw()}
+};
+</script></body></html>
