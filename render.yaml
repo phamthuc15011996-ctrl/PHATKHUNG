@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: phatkhung
-    runtime: node
-    buildCommand: npm install
-    startCommand: npm start
