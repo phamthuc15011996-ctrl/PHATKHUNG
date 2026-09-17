@@ -1,5 +1,0 @@
-PHATKHUNG ONLINE V2
-
-Giao diện dạng bảng chung như mẫu: Danh sách người chơi | Số.
-Đưa thư mục lên GitHub, tạo Render Web Service, Build Command: npm install, Start Command: npm start.
-Sau khi Deploy, gửi link Render cho tất cả người chơi.
